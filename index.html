@@ -1,73 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Plataforma de Reuniones</title>
 
-
-
-
-<title>ihcdmx</title>
-<link rel="stylesheet" href="https://lvsihmx.github.io/certificadoih/img/main.css">
-
+<style>
+* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+body { margin: 0; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:white; }
+#login { width:360px; margin:120px auto; background: rgba(0,0,0,0.4); padding:25px; border-radius:14px; text-align:center; box-shadow:0 0 25px rgba(0,0,0,0.5); }
+#login h2 { margin-bottom:20px; }
+#login input, #login button { width:100%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
+#login button { background:#00adb5; color:white; font-size:16px; cursor:pointer; }
+#app { display:none; height:100vh; }
+header { background: rgba(0,0,0,0.5); padding:12px 20px; display:flex; justify-content:space-between; align-items:center; }
+header h3 { margin:0; }
+header button { background:#e94560; border:none; padding:8px 12px; color:white; border-radius:6px; cursor:pointer; margin-left:5px; }
+#content { display:flex; height: calc(100vh - 60px); }
+#meet { flex:4; }
+#chat { flex:1; background: rgba(0,0,0,0.6); display:flex; flex-direction:column; padding:10px; }
+#chat h3 { margin-top:0; }
+#messages { flex:1; background:#111; padding:8px; overflow-y:auto; margin-bottom:6px; border-radius:6px; }
+#chat input, #chat button { padding:8px; border-radius:6px; border:none; }
+#chat button { margin-top:5px; background:#00adb5; color:white; }
+#screenRequest { margin-top:5px; padding:8px; background:#e94560; border:none; color:white; border-radius:6px; cursor:pointer; }
+</style>
+</head>
 <body>
 
+<!-- LOGIN -->
+<div id="login">
+  <h2>Entrar a la reunión</h2>
+  <input id="name" placeholder="Tu nombre">
+  <button onclick="enterRoom()">Entrar</button>
+</div>
 
-    <img src="https://lvsihmx.github.io/certificadoih/img/LOGOIHB.jpg" width="455" height="156" />
-  
-    
-    <body bgcolor="white" text="" marginwidth="100" marginheight="80">
-        
-        
-    <h1><center></center></h1>
-                
-    <h1><center>
-</h1></center></center></h1>
-    
+<!-- APP -->
+<div id="app">
+  <header>
+    <h3 id="roomTitle"></h3>
+    <div id="modControls" style="display:none;">
+      <button onclick="lockRoom()">🔒 Bloquear</button>
+      <button onclick="shareScreen()">📺 Compartir Pantalla</button>
+    </div>
+  </header>
 
+  <div id="content">
+    <div id="meet"></div>
 
-    
-    <h2><center></center></h2><br>
-    
-<h3><p></p>
+    <div id="chat">
+      <h3>Chat</h3>
+      <div id="messages"></div>
+      <input id="msg" placeholder="Mensaje">
+      <button onclick="sendMessage()">Enviar</button>
+      <button id="screenRequest" style="display:none;" onclick="requestScreen()">Solicitar compartir pantalla</button>
+    </div>
+  </div>
+</div>
 
-        <p> </p></h3>
-       
-<h3><p></p>
+<script src="https://meet.jit.si/external_api.js"></script>
+<script>
+let api;
+let isModerator=false;
+let roomName, roomPass;
+let screenRequestPending=false;
 
-    <p> </p></h3>
+// PARAMETROS DEL LINK
+const params = new URLSearchParams(window.location.search);
+roomName = params.get("sala");
+roomPass = params.get("pass");
+isModerator = params.get("mod")==="1";
 
-    <div class="grid">    
+if(!roomName||!roomPass){alert("Link inválido: falta sala o contraseña");}
 
-      
-             
-            
+// ENTRAR
+function enterRoom(){
+  const name=document.getElementById("name").value;
+  if(!name){alert("Escribe tu nombre"); return;}
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("roomTitle").innerText="Sala: "+roomName+(isModerator?" (Moderador)":"");
 
+  if(isModerator){document.getElementById("modControls").style.display="block";}
+  else{document.getElementById("screenRequest").style.display="block";}
 
+  api = new JitsiMeetExternalAPI("meet.jit.si",{
+    roomName: roomName,
+    parentNode: document.querySelector("#meet"),
+    userInfo:{displayName:name},
+    configOverwrite:{prejoinPageEnabled:false,disableDeepLinking:true},
+    interfaceConfigOverwrite:{
+      SHOW_JITSI_WATERMARK:false,
+      SHOW_WATERMARK_FOR_GUESTS:false,
+      TOOLBAR_BUTTONS:["microphone","camera","desktop","participants-pane","hangup"]
+    }
+  });
 
-        <div>
+  api.addEventListener("videoConferenceJoined",()=>{
+    if(isModerator){
+      api.executeCommand("password", roomPass);
+      api.executeCommand("toggleLobby", true);
+    }
+  });
 
-  <p>
-        
-            <a href="https://lvsihmx.github.io/certificadoih/img/cal.html"" class="btn btn-green">Da click para descargar el calendario Cambridge en papel 2023-2024 pb</a>
-           </p>
-               
-  <p>
-        
-            <a href="https://lvsihmx.github.io/certificadoih/img/cambridge.html"" class="btn btn-green">Da click para descargar el calendario Cambridge en computadora 2023-2024 </a>
-           </p>
+  api.addEventListener("incomingMessage", e=>{
+    addMessage(e.from,e.message);
+    handleScreenRequestMessage(e.from,e.message);
+  });
+}
 
-  <p>
-        
-            <a href="https://lvsihmx.github.io/certificadoih/img/ielts2024.html"" class="btn btn-green">Da click para descargar calendario IELTS en papel 2023-2024 </a>
-           </p> 
-        </div>
+// CHAT
+function sendMessage(){
+  const msg=document.getElementById("msg").value;
+  if(!msg) return;
+  api.executeCommand("sendChatMessage", msg);
+  addMessage("Yo",msg);
+  document.getElementById("msg").value="";
+}
 
- <div>
-  <p>
-        
-            <a href="https://lvsihmx.github.io/certificadoih/img/ihqccursos.pdf"" class="btn btn-green">Da click para conocer cursos del programa academico QC 2023-2024 </a>
-           </p> 
-        </div>
+function addMessage(user,text){
+  const div=document.createElement("div");
+  div.textContent=user+": "+text;
+  document.getElementById("messages").appendChild(div);
+}
 
+// MODERADOR
+function lockRoom(){
+  api.executeCommand("lockRoom");
+  alert("Sala bloqueada. Nadie más puede entrar.");
+}
 
-       <img src="https://lvsihmx.github.io/certificadoih/img/foot.png" width="800" height="100" style="float:centre"/>   
+// COMPARTIR PANTALLA MODERADOR
+function shareScreen(){
+  api.executeCommand("toggleShareScreen");
+}
 
-    <img src="https://lvsihmx.github.io/certificadoih/img/foot2.png" width="800" height="10" style="float:centre"/>
+// USUARIO SOLICITA COMPARTIR PANTALLA
+function requestScreen(){
+  if(screenRequestPending){alert("Solicitud ya enviada"); return;}
+  api.executeCommand("sendChatMessage","[SCREEN_REQUEST]"); // señal
+  screenRequestPending=true;
+  alert("Solicitud enviada al moderador");
+}
+
+// MODERADOR RECIBE SOLICITUD
+function handleScreenRequestMessage(user,message){
+  if(isModerator && message=="[SCREEN_REQUEST]"){
+    if(confirm(user+" solicita compartir pantalla. Permitir?")){
+      api.executeCommand("sendChatMessage","[SCREEN_APPROVED]:"+user);
+    } else {
+      api.executeCommand("sendChatMessage","[SCREEN_DENIED]:"+user);
+    }
+  }
+  // USUARIO recibe aprobación
+  if(!isModerator){
+    if(message.startsWith("[SCREEN_APPROVED]:") && message.split(":")[1]==document.getElementById("name").value){
+      alert("Moderador aprobó tu compartición de pantalla");
+      api.executeCommand("toggleShareScreen");
+      screenRequestPending=false;
+    }
+    if(message.startsWith("[SCREEN_DENIED]:") && message.split(":")[1]==document.getElementById("name").value){
+      alert("Moderador rechazó tu solicitud");
+      screenRequestPending=false;
+    }
+  }
+}
+</script>
 
 </body>
+</html>
+
+
