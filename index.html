@@ -2,27 +2,44 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Plataforma de Reuniones</title>
-
+<title>Plataforma de Reuniones Profesional</title>
 <style>
-* { box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
-body { margin: 0; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:white; }
-#login { width:360px; margin:120px auto; background: rgba(0,0,0,0.4); padding:25px; border-radius:14px; text-align:center; box-shadow:0 0 25px rgba(0,0,0,0.5); }
-#login h2 { margin-bottom:20px; }
-#login input, #login button { width:100%; padding:12px; margin:8px 0; border-radius:8px; border:none; }
-#login button { background:#00adb5; color:white; font-size:16px; cursor:pointer; }
-#app { display:none; height:100vh; }
-header { background: rgba(0,0,0,0.5); padding:12px 20px; display:flex; justify-content:space-between; align-items:center; }
-header h3 { margin:0; }
-header button { background:#e94560; border:none; padding:8px 12px; color:white; border-radius:6px; cursor:pointer; margin-left:5px; }
-#content { display:flex; height: calc(100vh - 60px); }
-#meet { flex:4; }
-#chat { flex:1; background: rgba(0,0,0,0.6); display:flex; flex-direction:column; padding:10px; }
-#chat h3 { margin-top:0; }
-#messages { flex:1; background:#111; padding:8px; overflow-y:auto; margin-bottom:6px; border-radius:6px; }
-#chat input, #chat button { padding:8px; border-radius:6px; border:none; }
-#chat button { margin-top:5px; background:#00adb5; color:white; }
-#screenRequest { margin-top:5px; padding:8px; background:#e94560; border:none; color:white; border-radius:6px; cursor:pointer; }
+*{box-sizing:border-box;font-family:"Segoe UI",Arial,sans-serif;}
+body{margin:0;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;}
+#login{width:360px;margin:120px auto;background: rgba(0,0,0,0.4);padding:25px;border-radius:14px;text-align:center;box-shadow:0 0 25px rgba(0,0,0,0.5);}
+#login h2{margin-bottom:20px;}
+#login input,#login button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;}
+#login button{background:#00adb5;color:white;font-size:16px;cursor:pointer;}
+#app{display:none;height:100vh;}
+header{background: rgba(0,0,0,0.5);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}
+header h3{margin:0;}
+header button{background:#e94560;border:none;padding:8px 12px;color:white;border-radius:6px;cursor:pointer;margin-left:5px;}
+#content{display:flex;height: calc(100vh - 60px);}
+#meet{flex:4;}
+#chat{flex:1;background: rgba(0,0,0,0.6);display:flex;flex-direction:column;padding:10px;}
+#chat h3{margin-top:0;}
+#messages{flex:1;background:#111;padding:8px;overflow-y:auto;margin-bottom:6px;border-radius:6px;}
+#chat input,#chat button{padding:8px;border-radius:6px;border:none;}
+#chat button{margin-top:5px;background:#00adb5;color:white;}
+#screenRequest{margin-top:5px;padding:8px;background:#e94560;border:none;color:white;border-radius:6px;cursor:pointer;}
+
+/* PANEL DE SOLICITUDES MODERADOR */
+#moderatorPanel{
+  position:fixed; top:80px; right:20px;
+  width:250px; max-height:400px;
+  background:rgba(0,0,0,0.85);
+  border:2px solid #00adb5;
+  border-radius:10px;
+  overflow-y:auto;
+  padding:10px;
+  display:none;
+  z-index:9999;
+}
+#moderatorPanel h4{margin:0 0 10px 0; text-align:center;}
+.requestItem{background:#222;margin:5px 0;padding:6px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;}
+.requestItem button{padding:4px 6px;margin-left:4px;border:none;border-radius:4px;cursor:pointer;}
+.acceptBtn{background:#00adb5;color:white;}
+.denyBtn{background:#e94560;color:white;}
 </style>
 </head>
 <body>
@@ -46,7 +63,6 @@ header button { background:#e94560; border:none; padding:8px 12px; color:white; 
 
   <div id="content">
     <div id="meet"></div>
-
     <div id="chat">
       <h3>Chat</h3>
       <div id="messages"></div>
@@ -57,14 +73,21 @@ header button { background:#e94560; border:none; padding:8px 12px; color:white; 
   </div>
 </div>
 
+<!-- PANEL MODERADOR -->
+<div id="moderatorPanel">
+  <h4>Solicitudes de pantalla</h4>
+  <div id="requestList"></div>
+</div>
+
 <script src="https://meet.jit.si/external_api.js"></script>
 <script>
 let api;
 let isModerator=false;
 let roomName, roomPass;
 let screenRequestPending=false;
+let moderatorExists=false;
 
-// PARAMETROS DEL LINK
+// Link params
 const params = new URLSearchParams(window.location.search);
 roomName = params.get("sala");
 roomPass = params.get("pass");
@@ -78,10 +101,7 @@ function enterRoom(){
   if(!name){alert("Escribe tu nombre"); return;}
   document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="block";
-  document.getElementById("roomTitle").innerText="Sala: "+roomName+(isModerator?" (Moderador)":"");
-
-  if(isModerator){document.getElementById("modControls").style.display="block";}
-  else{document.getElementById("screenRequest").style.display="block";}
+  document.getElementById("roomTitle").innerText="Sala: "+roomName+(isModerator?" (Moderador?)":"");
 
   api = new JitsiMeetExternalAPI("meet.jit.si",{
     roomName: roomName,
@@ -95,17 +115,36 @@ function enterRoom(){
     }
   });
 
+  // Detectar primer moderador
   api.addEventListener("videoConferenceJoined",()=>{
     if(isModerator){
-      api.executeCommand("password", roomPass);
-      api.executeCommand("toggleLobby", true);
+      api.executeCommand("sendChatMessage","[MODERATOR_JOINED]");
     }
   });
 
+  // Escuchar mensajes
   api.addEventListener("incomingMessage", e=>{
     addMessage(e.from,e.message);
     handleScreenRequestMessage(e.from,e.message);
+    handleModeratorCheck(e.from,e.message);
   });
+
+  // Mostrar controles según rol
+  setTimeout(()=>{
+    if(isModerator && !moderatorExists){
+      document.getElementById("modControls").style.display="block";
+      document.getElementById("moderatorPanel").style.display="block";
+      alert("Eres el moderador real 👍");
+    }
+    else if(isModerator && moderatorExists){
+      isModerator=false;
+      alert("Ya hay un moderador en la sala. Entraste como invitado");
+      document.getElementById("screenRequest").style.display="block";
+    }
+    else{
+      document.getElementById("screenRequest").style.display="block";
+    }
+  },1000);
 }
 
 // CHAT
@@ -123,35 +162,30 @@ function addMessage(user,text){
   document.getElementById("messages").appendChild(div);
 }
 
-// MODERADOR
-function lockRoom(){
-  api.executeCommand("lockRoom");
-  alert("Sala bloqueada. Nadie más puede entrar.");
+// MODERADOR CHECK
+function handleModeratorCheck(user,message){
+  if(message=="[MODERATOR_JOINED]"){moderatorExists=true;}
 }
 
-// COMPARTIR PANTALLA MODERADOR
-function shareScreen(){
-  api.executeCommand("toggleShareScreen");
-}
+// MODERADOR
+function lockRoom(){api.executeCommand("lockRoom");alert("Sala bloqueada. Nadie más puede entrar.");}
+function shareScreen(){api.executeCommand("toggleShareScreen");}
 
 // USUARIO SOLICITA COMPARTIR PANTALLA
 function requestScreen(){
   if(screenRequestPending){alert("Solicitud ya enviada"); return;}
-  api.executeCommand("sendChatMessage","[SCREEN_REQUEST]"); // señal
+  api.executeCommand("sendChatMessage","[SCREEN_REQUEST]:"+document.getElementById("name").value);
   screenRequestPending=true;
   alert("Solicitud enviada al moderador");
 }
 
 // MODERADOR RECIBE SOLICITUD
 function handleScreenRequestMessage(user,message){
-  if(isModerator && message=="[SCREEN_REQUEST]"){
-    if(confirm(user+" solicita compartir pantalla. Permitir?")){
-      api.executeCommand("sendChatMessage","[SCREEN_APPROVED]:"+user);
-    } else {
-      api.executeCommand("sendChatMessage","[SCREEN_DENIED]:"+user);
-    }
+  if(isModerator && message.startsWith("[SCREEN_REQUEST]:")){
+    const requester = message.split(":")[1];
+    addRequestToPanel(requester);
   }
-  // USUARIO recibe aprobación
+
   if(!isModerator){
     if(message.startsWith("[SCREEN_APPROVED]:") && message.split(":")[1]==document.getElementById("name").value){
       alert("Moderador aprobó tu compartición de pantalla");
@@ -164,9 +198,36 @@ function handleScreenRequestMessage(user,message){
     }
   }
 }
+
+// PANEL MODERADOR
+function addRequestToPanel(name){
+  const list = document.getElementById("requestList");
+  if([...list.children].some(c=>c.dataset.user===name)) return; // ya existe
+  const div = document.createElement("div");
+  div.className="requestItem";
+  div.dataset.user=name;
+  div.innerHTML=`<span>${name}</span>
+  <div>
+  <button class="acceptBtn" onclick="approveScreen('${name}', this)">✔</button>
+  <button class="denyBtn" onclick="denyScreen('${name}', this)">✖</button>
+  </div>`;
+  list.appendChild(div);
+}
+
+function approveScreen(name, btn){
+  api.executeCommand("sendChatMessage","[SCREEN_APPROVED]:"+name);
+  btn.parentElement.parentElement.remove();
+}
+
+function denyScreen(name, btn){
+  api.executeCommand("sendChatMessage","[SCREEN_DENIED]:"+name);
+  btn.parentElement.parentElement.remove();
+}
 </script>
 
 </body>
 </html>
+
+
 
 
