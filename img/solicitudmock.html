@@ -1,0 +1,1221 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Formato Mock</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef3f8,
+            #dfe8f2
+        );
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 30px;
+}
+
+
+.contenedor {
+
+    width: 100%;
+
+    max-width: 650px;
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    padding: 35px;
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,.12);
+}
+
+
+h1 {
+
+    text-align: center;
+
+    margin: 0 0 10px 0;
+
+    color: #1f2937;
+
+}
+
+
+.descripcion {
+
+    text-align: center;
+
+    color: #6b7280;
+
+    margin-bottom: 30px;
+
+    line-height: 1.5;
+}
+
+
+.pasos {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 30px;
+}
+
+
+.paso {
+
+    flex: 1;
+
+    text-align: center;
+
+    padding: 10px 5px;
+
+    border-radius: 8px;
+
+    background: #f3f4f6;
+
+    color: #4b5563;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+
+.campo {
+
+    margin-bottom: 20px;
+}
+
+
+label {
+
+    display: block;
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+
+    color: #374151;
+}
+
+
+input[type="text"],
+input[type="email"] {
+
+    width: 100%;
+
+    padding: 13px 14px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 9px;
+
+    font-size: 16px;
+
+    outline: none;
+
+    transition: .2s;
+}
+
+
+input[type="text"]:focus,
+input[type="email"]:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.12);
+}
+
+
+.descarga {
+
+    text-align: center;
+
+    background: #f3f6ff;
+
+    padding: 22px;
+
+    border-radius: 12px;
+
+    margin: 25px 0;
+}
+
+
+.descarga p {
+
+    margin-top: 0;
+
+    color: #374151;
+}
+
+
+.descarga a {
+
+    display: inline-block;
+
+    background: #2563eb;
+
+    color: white;
+
+    text-decoration: none;
+
+    padding: 13px 25px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    transition: .2s;
+}
+
+
+.descarga a:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+}
+
+
+.archivo {
+
+    border: 2px dashed #cbd5e1;
+
+    border-radius: 12px;
+
+    padding: 25px;
+
+    text-align: center;
+
+    background: #f8fafc;
+}
+
+
+.archivo p {
+
+    color: #374151;
+
+    margin-top: 0;
+}
+
+
+input[type="file"] {
+
+    width: 100%;
+
+    padding: 10px;
+
+    cursor: pointer;
+}
+
+
+.nombreArchivo {
+
+    margin-top: 12px;
+
+    color: #374151;
+
+    font-size: 14px;
+
+    word-break: break-word;
+}
+
+
+.formatos {
+
+    margin-top: 10px;
+
+    color: #6b7280;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+button {
+
+    width: 100%;
+
+    border: none;
+
+    padding: 15px;
+
+    margin-top: 25px;
+
+    border-radius: 9px;
+
+    background: #16a34a;
+
+    color: white;
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+
+button:hover {
+
+    background: #15803d;
+}
+
+
+button:disabled {
+
+    background: #9ca3af;
+
+    cursor: not-allowed;
+}
+
+
+.mensaje {
+
+    display: none;
+
+    margin-top: 20px;
+
+    padding: 15px;
+
+    border-radius: 9px;
+
+    text-align: center;
+
+    font-weight: bold;
+
+    line-height: 1.5;
+}
+
+
+.exito {
+
+    display: block;
+
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+
+.error {
+
+    display: block;
+
+    background: #fee2e2;
+
+    color: #991b1b;
+}
+
+
+.cargando {
+
+    display: block;
+
+    background: #fef3c7;
+
+    color: #92400e;
+}
+
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .contenedor {
+        padding: 25px 20px;
+    }
+
+    .pasos {
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="contenedor">
+
+
+    <h1>
+        
+    Solicitud de evaluación por Mock Exam
+
+    </h1>
+
+
+    <div class="descripcion">
+
+    
+
+    </div>
+
+
+    <!-- ==========================================
+         PASOS
+         ========================================== -->
+
+    <div class="pasos">
+
+        <div class="paso">
+            1. DESCARGA
+        </div>
+
+        <div class="paso">
+            2. LLENA
+        </div>
+
+        <div class="paso">
+            3. SUBE
+        </div>
+
+        <div class="paso">
+            4. ENVÍA
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         DESCARGA
+         ========================================== -->
+
+    <div class="descarga">
+
+        <p>
+            <strong>
+                Paso 1. Descarga el archivo
+            </strong>
+        </p>
+
+
+        <!--
+        =================================================
+        CAMBIA SOLAMENTE EL HREF
+        =================================================
+        -->
+
+        <a
+            href="https://docs.google.com/spreadsheets/d/1_2h42OY03_P3rpl9dd738w4RE-QzhT_yLDrMY74BdTk/export?format=xlsx"
+            target="_blank">
+
+            DESCARGAR FORMATO MOCK
+
+        </a>
+
+    </div>
+
+
+    <!-- ==========================================
+         FORMULARIO
+         ========================================== -->
+
+    <form id="formulario">
+
+
+        <!-- COLEGIO -->
+
+        <div class="campo">
+
+            <label for="colegio">
+
+                Nombre del colegio
+
+            </label>
+
+            <input
+                type="text"
+                id="colegio"
+                name="colegio"
+                autocomplete="organization"
+                required>
+
+        </div>
+
+
+        <!-- COORDINADOR -->
+
+        <div class="campo">
+
+            <label for="coordinador">
+
+                Nombre del coordinador(a)
+
+            </label>
+
+            <input
+                type="text"
+                id="coordinador"
+                name="coordinador"
+                autocomplete="name"
+                required>
+
+        </div>
+
+
+        <!-- CORREO -->
+
+        <div class="campo">
+
+            <label for="correo">
+
+                Correo electrónico
+
+            </label>
+
+            <input
+                type="email"
+                id="correo"
+                name="correo"
+                autocomplete="email"
+                required>
+
+        </div>
+
+
+        <!-- ARCHIVO -->
+
+        <div class="campo">
+
+            <label>
+
+                Archivo llenado
+
+            </label>
+
+
+            <div class="archivo">
+
+
+                <p>
+
+                    <strong>
+                        Paso 3. Da click para subir tu archivo llenado
+                    </strong>
+
+                </p>
+
+
+                <input
+                    type="file"
+                    id="archivo"
+                    accept=".xlsx,.xls,.xlsm,.xlsb,.numbers"
+                    required>
+
+
+                <div
+                    id="nombreArchivo"
+                    class="nombreArchivo">
+
+                    No se ha seleccionado ningún archivo.
+
+                </div>
+
+
+                <div class="formatos">
+
+                    Formatos permitidos:
+                    Excel (.xlsx, .xls, .xlsm, .xlsb)
+                    y Apple Numbers (.numbers).
+
+                    <br>
+
+                    Tamaño máximo: 10 MB.
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- BOTÓN -->
+
+        <button
+            type="submit"
+            id="btnEnviar">
+
+            ENVIAR ARCHIVO
+
+        </button>
+
+
+    </form>
+
+
+    <!-- MENSAJE -->
+
+    <div
+        id="mensaje"
+        class="mensaje">
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+/******************************************************
+ * URL DEL GOOGLE APPS SCRIPT
+ *
+ * DESPUÉS DE PUBLICAR TU SCRIPT COMO WEB APP,
+ * PEGA AQUÍ LA URL QUE TE PROPORCIONE GOOGLE.
+ ******************************************************/
+
+const URL_SCRIPT =
+    "https://script.google.com/macros/s/AKfycbxzLJlt7IPHQvi-U0In4e-Opw0OIcIDfV1Ed3ndCmNZToQI0Tv3yPeGU71VuzMJajd8EQ/exec";
+
+
+/******************************************************
+ * CONFIGURACIÓN DEL ARCHIVO
+ ******************************************************/
+
+const MAX_MB = 10;
+
+const MAX_BYTES =
+    MAX_MB * 1024 * 1024;
+
+
+const extensionesPermitidas = [
+
+    ".xlsx",
+    ".xls",
+    ".xlsm",
+    ".xlsb",
+    ".numbers"
+
+];
+
+
+/******************************************************
+ * ELEMENTOS
+ ******************************************************/
+
+const formulario =
+    document.getElementById("formulario");
+
+
+const archivoInput =
+    document.getElementById("archivo");
+
+
+const nombreArchivo =
+    document.getElementById("nombreArchivo");
+
+
+const mensaje =
+    document.getElementById("mensaje");
+
+
+const boton =
+    document.getElementById("btnEnviar");
+
+
+/******************************************************
+ * MOSTRAR NOMBRE DEL ARCHIVO
+ ******************************************************/
+
+archivoInput.addEventListener(
+    "change",
+    function() {
+
+
+        const archivo =
+            this.files[0];
+
+
+        if (!archivo) {
+
+            nombreArchivo.textContent =
+                "No se ha seleccionado ningún archivo.";
+
+            return;
+
+        }
+
+
+        const extension =
+            archivo.name
+                .substring(
+                    archivo.name.lastIndexOf(".")
+                )
+                .toLowerCase();
+
+
+        /**********************************************
+         * VALIDAR EXTENSIÓN
+         **********************************************/
+
+        if (
+            !extensionesPermitidas
+                .includes(extension)
+        ) {
+
+            nombreArchivo.textContent =
+                "❌ Formato no permitido.";
+
+            this.value = "";
+
+            mensaje.className =
+                "mensaje error";
+
+            mensaje.textContent =
+                "Solo se permiten archivos de Excel " +
+                "(.xlsx, .xls, .xlsm, .xlsb) " +
+                "o Apple Numbers (.numbers).";
+
+            return;
+
+        }
+
+
+        /**********************************************
+         * VALIDAR TAMAÑO
+         **********************************************/
+
+        if (archivo.size > MAX_BYTES) {
+
+            nombreArchivo.textContent =
+                "❌ El archivo supera los 10 MB.";
+
+            this.value = "";
+
+            mensaje.className =
+                "mensaje error";
+
+            mensaje.textContent =
+                "El archivo no puede superar " +
+                MAX_MB +
+                " MB.";
+
+            return;
+
+        }
+
+
+        /**********************************************
+         * ARCHIVO CORRECTO
+         **********************************************/
+
+        nombreArchivo.textContent =
+            "✓ Archivo seleccionado: " +
+            archivo.name;
+
+        mensaje.className =
+            "mensaje";
+
+        mensaje.textContent = "";
+
+    }
+);
+
+
+/******************************************************
+ * CONVERTIR ARCHIVO A BASE64
+ ******************************************************/
+
+function convertirBase64(archivo) {
+
+
+    return new Promise(
+        function(resolve, reject) {
+
+
+            const lector =
+                new FileReader();
+
+
+            lector.onload =
+                function() {
+
+
+                    const resultado =
+                        lector.result;
+
+
+                    const base64 =
+                        resultado
+                            .split(",")[1];
+
+
+                    resolve(base64);
+
+                };
+
+
+            lector.onerror =
+                function() {
+
+
+                    reject(
+                        new Error(
+                            "No se pudo leer el archivo."
+                        )
+                    );
+
+                };
+
+
+            lector.readAsDataURL(archivo);
+
+        }
+    );
+
+}
+
+
+/******************************************************
+ * CREAR CAMPO OCULTO
+ ******************************************************/
+
+function agregarCampo(
+    formulario,
+    nombre,
+    valor
+) {
+
+
+    const input =
+        document.createElement("input");
+
+
+    input.type = "hidden";
+
+    input.name = nombre;
+
+    input.value = valor;
+
+
+    formulario.appendChild(input);
+
+}
+
+
+/******************************************************
+ * ENVÍO DEL FORMULARIO
+ ******************************************************/
+
+formulario.addEventListener(
+    "submit",
+    async function(e) {
+
+
+        e.preventDefault();
+
+
+        /**********************************************
+         * OBTENER DATOS
+         **********************************************/
+
+        const colegio =
+            document
+                .getElementById("colegio")
+                .value
+                .trim();
+
+
+        const coordinador =
+            document
+                .getElementById("coordinador")
+                .value
+                .trim();
+
+
+        const correo =
+            document
+                .getElementById("correo")
+                .value
+                .trim();
+
+
+        const archivo =
+            archivoInput.files[0];
+
+
+        /**********************************************
+         * VALIDAR DATOS
+         **********************************************/
+
+        if (!colegio) {
+
+            mostrarError(
+                "Escribe el nombre del colegio."
+            );
+
+            return;
+
+        }
+
+
+        if (!coordinador) {
+
+            mostrarError(
+                "Escribe el nombre del coordinador(a)."
+            );
+
+            return;
+
+        }
+
+
+        if (!correo) {
+
+            mostrarError(
+                "Escribe un correo electrónico válido."
+            );
+
+            return;
+
+        }
+
+
+        if (!archivo) {
+
+            mostrarError(
+                "Selecciona el archivo que deseas enviar."
+            );
+
+            return;
+
+        }
+
+
+        /**********************************************
+         * VALIDAR EXTENSIÓN NUEVAMENTE
+         **********************************************/
+
+        const extension =
+            archivo.name
+                .substring(
+                    archivo.name.lastIndexOf(".")
+                )
+                .toLowerCase();
+
+
+        if (
+            !extensionesPermitidas
+                .includes(extension)
+        ) {
+
+            mostrarError(
+                "El archivo seleccionado no es un formato permitido."
+            );
+
+            return;
+
+        }
+
+
+        /**********************************************
+         * VALIDAR TAMAÑO
+         **********************************************/
+
+        if (archivo.size > MAX_BYTES) {
+
+            mostrarError(
+                "El archivo no puede superar los 10 MB."
+            );
+
+            return;
+
+        }
+
+
+        /**********************************************
+         * VALIDAR URL
+         **********************************************/
+
+        if (
+            !URL_SCRIPT ||
+            URL_SCRIPT.includes("PON_AQUI")
+        ) {
+
+            mostrarError(
+                "Primero debes colocar la URL de tu Web App de Google Apps Script."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+
+            boton.disabled = true;
+
+            boton.textContent =
+                "ENVIANDO...";
+
+
+            mostrarCargando(
+                "Preparando el archivo..."
+            );
+
+
+            /******************************************
+             * CONVERTIR ARCHIVO
+             ******************************************/
+
+            const base64 =
+                await convertirBase64(
+                    archivo
+                );
+
+
+            mostrarCargando(
+                "Enviando archivo..."
+            );
+
+
+            /******************************************
+             * CREAR FORMULARIO DE ENVÍO
+             ******************************************/
+
+            const formEnvio =
+                document.createElement("form");
+
+
+            formEnvio.method =
+                "POST";
+
+
+            formEnvio.action =
+                URL_SCRIPT;
+
+
+            formEnvio.target =
+                "iframeRespuesta";
+
+
+            formEnvio.style.display =
+                "none";
+
+
+            /******************************************
+             * AGREGAR DATOS
+             ******************************************/
+
+
+
+            agregarCampo(
+                formEnvio,
+                "colegio",
+                colegio
+            );
+
+
+            agregarCampo(
+                formEnvio,
+                "coordinador",
+                coordinador
+            );
+
+
+            agregarCampo(
+                formEnvio,
+                "correo",
+                correo
+            );
+
+
+            agregarCampo(
+                formEnvio,
+                "nombreArchivo",
+                archivo.name
+            );
+
+
+            agregarCampo(
+                formEnvio,
+                "tipoArchivo",
+                archivo.type
+            );
+
+
+            agregarCampo(
+                formEnvio,
+                "archivoBase64",
+                base64
+            );
+
+
+            document.body.appendChild(
+                formEnvio
+            );
+
+
+            /******************************************
+             * ENVIAR
+             ******************************************/
+
+            formEnvio.submit();
+
+
+            /******************************************
+             * MOSTRAR CONFIRMACIÓN
+             ******************************************/
+
+            setTimeout(
+                function() {
+
+
+                    mostrarExito(
+                        "¡Archivo enviado correctamente! " +
+                        "Recibirás un correo de confirmación."
+                    );
+
+
+                    formulario.reset();
+
+
+                    nombreArchivo.textContent =
+                        "No se ha seleccionado ningún archivo.";
+
+
+                    boton.disabled =
+                        false;
+
+
+                    boton.textContent =
+                        "ENVIAR ARCHIVO";
+
+
+                    formEnvio.remove();
+
+
+                },
+                4000
+            );
+
+
+        } catch (error) {
+
+
+            console.error(error);
+
+
+            mostrarError(
+                "No se pudo enviar el archivo. " +
+                "Intenta nuevamente."
+            );
+
+
+            boton.disabled =
+                false;
+
+
+            boton.textContent =
+                "ENVIAR ARCHIVO";
+
+        }
+
+    }
+);
+
+
+/******************************************************
+ * MENSAJES
+ ******************************************************/
+
+function mostrarError(texto) {
+
+    mensaje.className =
+        "mensaje error";
+
+    mensaje.textContent =
+        texto;
+
+}
+
+
+function mostrarCargando(texto) {
+
+    mensaje.className =
+        "mensaje cargando";
+
+    mensaje.textContent =
+        texto;
+
+}
+
+
+function mostrarExito(texto) {
+
+    mensaje.className =
+        "mensaje exito";
+
+    mensaje.textContent =
+        texto;
+
+}
+
+</script>
+
+
+<!--
+========================================================
+IFRAME INVISIBLE
+========================================================
+-->
+
+<iframe
+    name="iframeRespuesta"
+    style="display:none;">
+</iframe>
+
+
+</body>
+
+</html>
