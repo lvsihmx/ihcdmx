@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutorial Writing</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#f4f6fa;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#111827;
+}
+.tutorial-wrap{
+  width:min(380px,90vw);
+  margin:24px auto;
+}
+.animation-scale{transform:scale(.5);transform-origin:top center;width:200%;margin-left:-50%;margin-bottom:-50%;}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:28px 26px 25px;
+  box-shadow:0 8px 28px rgba(20,35,70,.10);
+  position:relative;
+  overflow:hidden;
+}
+h1{
+  margin:0 0 8px;
+  color:#21439b;
+  font-size:30px;
+}
+.subtitle{
+  color:#4b5563;
+  font-size:15px;
+  margin-bottom:24px;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px 16px;
+}
+.field.full{grid-column:1/-1}
+label{
+  display:block;
+  font-weight:700;
+  font-size:15px;
+  margin-bottom:7px;
+}
+.input{
+  height:43px;
+  border:1px solid #c7d0df;
+  border-radius:9px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  color:#4b5563;
+  background:#fff;
+  position:relative;
+}
+.hint{
+  font-size:12px;
+  color:#6b7280;
+  margin-top:7px;
+}
+.divider{
+  height:1px;
+  background:#dfe4ec;
+  margin:25px 0 20px;
+}
+.start-title{
+  font-weight:700;
+  margin-bottom:7px;
+}
+.controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+button{
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  font-weight:700;
+  font-size:15px;
+  padding:11px 17px;
+  cursor:pointer;
+}
+.start-btn{background:#168044}
+.submit-btn{background:#29439d}
+.timer{
+  color:#173c91;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.writing{
+  height:170px;
+  margin-top:10px;
+  border:1px solid #c7d0df;
+  border-radius:9px;
+  background:#f1f4f8;
+  padding:15px;
+  color:#6b7280;
+  font-size:15px;
+  line-height:1.5;
+}
+.words{
+  color:#21439b;
+  font-size:12px;
+  font-weight:700;
+  margin-top:7px;
+}
+.submit-row{margin-top:15px}
+.message{
+  margin-top:12px;
+  color:#168044;
+  font-size:13px;
+  font-weight:700;
+  min-height:18px;
+}
+.step{
+  margin-top:18px;
+  background:#edf2ff;
+  color:#21439b;
+  border-radius:9px;
+  padding:12px 14px;
+  font-size:14px;
+  line-height:1.4;
+}
+.target{
+  box-shadow:0 0 0 4px rgba(36,67,155,.16);
+  animation:pulse 1s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 3px rgba(36,67,155,.12)}
+  50%{box-shadow:0 0 0 6px rgba(36,67,155,.25)}
+}
+.clicked{animation:pressed .45s ease}
+@keyframes pressed{
+  50%{transform:scale(.95)}
+}
+.cursor{
+  position:absolute;
+  width:22px;
+  height:22px;
+  z-index:20;
+  pointer-events:none;
+  opacity:0;
+  transform:translate(0,0);
+  transition:left .65s cubic-bezier(.2,.8,.2,1),top .65s cubic-bezier(.2,.8,.2,1),opacity .2s;
+}
+.cursor:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#173a8f;
+  box-shadow:0 2px 5px rgba(0,0,0,.28);
+}
+.cursor.clicking{animation:cursorClick .4s ease}
+@keyframes cursorClick{
+  50%{transform:translate(2px,2px) scale(.78)}
+}
+}
+}
+@media(max-width:620px){
+  .form-grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+}
+.welcome{
+  text-align:center;
+  margin-bottom:22px;
+}
+.welcome h2{
+  margin:0 0 8px;
+  color:#21439b;
+  font-size:30px;
+}
+.welcome p{
+  margin:0;
+  color:#4b5563;
+  font-size:15px;
+}
+.ready-btn{
+  display:block;
+  width:max-content;
+  margin:22px auto 0;
+  background:#168044;
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  font-weight:700;
+  font-size:15px;
+  padding:11px 17px;
+  cursor:pointer;
+  text-decoration:none;
+  box-sizing:border-box;
+}
+.ready-btn:hover{background:#126b38}
+</style>
+</head>
+<body>
+
+<div class="tutorial-wrap">
+  <div class="welcome">
+    <h2>Welcome to your Writing Assessment</h2>
+    <p>Once you understand the instructions, click the button <strong>"I'm Ready to Start"</strong> below to begin.</p>
+  </div>
+
+  <div class="animation-scale"><div class="card" id="card">
+    <div class="cursor" id="cursor"></div>
+
+    <h1>Writing</h1>
+    <div class="subtitle">
+      Fill in your personal data, click start, write the task given and finally submit your writing by clicking the submit button.
+    </div>
+
+    <div class="form-grid">
+      <div class="field" id="schoolField">
+        <label>School name *</label>
+        <div class="input" id="schoolInput"><span id="schoolText"></span></div>
+        <div class="hint">Type your ID and select it.</div>
+      </div>
+
+      <div class="field" id="groupField">
+        <label>Grade and Class *</label>
+        <div class="input" id="groupInput"><span id="groupText"></span></div>
+      </div>
+
+      <div class="field full" id="nameField">
+        <label>Full name *</label>
+        <div class="input" id="nameInput"><span id="nameText"></span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="start-title">¡Let's start!</div>
+    <div class="controls">
+      <button class="start-btn" id="startBtn">▶ Click to start</button>
+      <span class="timer" id="timer">00:00:00</span>
+    </div>
+
+    <div class="writing" id="writing">
+      Click ▶ Start...
+    </div>
+    <div class="words" id="words">0 palabras</div>
+
+    <div class="submit-row">
+      <button class="submit-btn" id="submitBtn">Submit</button>
+    </div>
+
+    <div class="message" id="message">
+      After clicking Submit, wait for the Word (.docx) file to be sent and downloaded to your computer.
+    </div>
+
+    <div class="step" id="step">
+      <b>1.</b> Enter your ID and select it.
+    </div>
+  </div>
+  <a class="ready-btn" id="readyBtn" href="TU-LINK-AQUI">I'm Ready to Start</a>
+</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const card = $("card"), cursor = $("cursor");
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function typeInto(el,text,speed=65){
+  el.textContent="";
+  for(const c of text){
+    el.textContent+=c;
+    await sleep(speed);
+  }
+}
+
+function moveCursorTo(el, dx=18, dy=12){
+  const a=card.getBoundingClientRect(), b=el.getBoundingClientRect();
+  // The animation card is displayed at 50%, so convert screen coordinates
+  // back to the card's original coordinate system before positioning the cursor.
+  const scale = 0.5;
+  cursor.style.left=((b.left-a.left)/scale + dx/scale)+"px";
+  cursor.style.top=((b.top-a.top)/scale + dy/scale)+"px";
+  cursor.style.opacity="1";
+}
+
+function moveCursorToButton(el){
+  const a=card.getBoundingClientRect(), b=el.getBoundingClientRect();
+  const scale = 0.5;
+  // Keep the mouse just to the left of the button and vertically centered.
+  const screenX = b.left - a.left - 10;
+  const screenY = b.top - a.top + b.height/2 - 11;
+  cursor.style.left=(screenX/scale)+"px";
+  cursor.style.top=(screenY/scale)+"px";
+  cursor.style.opacity="1";
+}
+function hideCursor(){cursor.style.opacity="0";}
+function target(el,on=true){el.classList.toggle("target",on);}
+async function clickEl(el){
+  cursor.classList.add("clicking");
+  el.classList.add("clicked");
+  await sleep(220);
+  cursor.classList.remove("clicking");
+  el.classList.remove("clicked");
+  await sleep(180);
+}
+
+async function runTutorial(){
+  // Reset
+  $("schoolText").textContent="";
+  $("groupText").textContent="";
+  $("nameText").textContent="";
+  $("writing").textContent="Click ▶ Start...";
+  $("words").textContent="0 palabras";
+  $("message").textContent="After clicking Submit, wait for the Word (.docx) file to be sent and downloaded to your computer.";
+  $("timer").textContent="00:00:00";
+
+  // 1
+  $("step").innerHTML="<b>1.</b> Enter your ID and select it.";
+  moveCursorTo($("schoolInput"));
+  target($("schoolInput"));
+  await sleep(700);
+  await typeInto($("schoolText"),"123456",70);
+  await sleep(350);
+  $("schoolText").textContent="123456 ✓";
+  await clickEl($("schoolInput"));
+  target($("schoolInput"),false);
+  await sleep(650);
+
+  // 2
+  $("step").innerHTML="<b>2.</b> Enter your group.";
+  moveCursorTo($("groupInput"));
+  target($("groupInput"));
+  await sleep(500);
+  await typeInto($("groupText"),"3A",100);
+  await clickEl($("groupInput"));
+  target($("groupInput"),false);
+  await sleep(650);
+
+  // 3
+  $("step").innerHTML="<b>3.</b> Enter your full name. If you have only one first name and one last name, repeat the last name.";
+  moveCursorTo($("nameInput"));
+  target($("nameInput"));
+  await sleep(500);
+  await typeInto($("nameText"),"Juan Pérez Pérez",65);
+  await clickEl($("nameInput"));
+  target($("nameInput"),false);
+  await sleep(800);
+
+  // 4
+  $("step").innerHTML="<b>4.</b> Click the green button to start writing.";
+  moveCursorToButton($("startBtn"));
+  target($("startBtn"));
+  await sleep(900);
+  await clickEl($("startBtn"));
+  target($("startBtn"),false);
+  $("writing").textContent="The writing task has started...";
+  $("writing").style.color="#333";
+  $("timer").textContent="00:00:03";
+  await sleep(1500);
+
+  // 5
+  $("step").innerHTML="<b>5.</b> When you finish, click the blue button and wait for your document to be downloaded and sent.";
+  moveCursorToButton($("submitBtn"));
+  target($("submitBtn"));
+  await sleep(900);
+  await clickEl($("submitBtn"));
+  target($("submitBtn"),false);
+  $("message").textContent="✓ Document submitted. Wait for the Word (.docx) file to download to your computer.";
+  $("message").style.display="block";
+  await sleep(2600);
+
+  hideCursor();
+  await sleep(500);
+  runTutorial();
+}
+
+runTutorial();
+</script>
+</body>
+</html>
