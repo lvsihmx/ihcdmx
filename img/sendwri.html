@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entrega de trabajo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;color:#202634}
+.container{max-width:760px;margin:35px auto;padding:20px}
+.card{background:#fff;border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;color:#243b8f}
+.sub{color:#687385;margin:0 0 25px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{margin-bottom:17px}
+.full{grid-column:1/-1}
+label{display:block;font-weight:700;margin-bottom:7px}
+input,select,textarea{width:100%;border:1px solid #ccd3df;border-radius:10px;padding:12px;font-size:16px;font-family:Arial,Helvetica,sans-serif;background:#fff}
+select{cursor:pointer}
+textarea{min-height:220px;resize:vertical}
+textarea.locked{background:#f1f4f8;cursor:not-allowed}
+input:focus,textarea:focus{outline:2px solid #aab7ee;border-color:#5268c5}
+.help{font-size:13px;color:#687385;margin-top:6px;line-height:1.4}
+.divider{height:1px;background:#e4e8ef;margin:22px 0}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{border:0;border-radius:10px;padding:14px 22px;background:#243b8f;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+button:hover{background:#1c3077}
+button:disabled{opacity:.55;cursor:not-allowed}
+.status{padding:12px 14px;border-radius:10px;background:#f1f4fa;color:#465168;display:none;line-height:1.45;white-space:pre-line}
+.status.show{display:block}
+.status.ok{background:#eaf8f0;color:#176b3a}
+.status.err{
+    background:#fff0f0;
+    color:#9b2020;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    animation:alertaEntrada 3s ease-out;
+}
+.status.err::before{
+    content:"⚠";
+    font-size:24px;
+    line-height:1;
+    flex:none;
+}
+@keyframes alertaEntrada{
+    0%{opacity:0;transform:translateY(-35px)}
+    45%{opacity:1;transform:translateY(8px)}
+    70%{transform:translateY(-4px)}
+    100%{transform:translateY(0)}
+}
+@media(prefers-reduced-motion:reduce){
+    .status.err{animation:none}
+}
+.note{font-size:13px;color:#687385;line-height:1.5;margin-top:17px}
+.file-name{margin-top:8px;font-size:13px;font-weight:700;color:#243b8f}
+@media(max-width:650px){.container{margin:10px auto;padding:12px}.card{padding:20px}.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="card">
+
+<h1>Writing</h1>
+<p class="sub">Fill in your personal data, click start, write the task given and finally submit your writing by clicking the submit button.</p>
+
+<form id="uploadForm">
+
+<div class="grid">
+
+<div class="field">
+<label for="colegio">School name*</label>
+<input id="colegio" name="colegio" list="colegiosDisponibles"
+       placeholder="Type to search your school..." autocomplete="off" required>
+<datalist id="colegiosDisponibles">
+  <option value="">Searching...</option>
+</datalist>
+<div class="help">Type your ID and select it.</div>
+</div>
+
+
+<div class="field">
+<label for="grupo">Grade and Class *</label>
+<input id="grupo" placeholder="e.g. 3A">
+</div>
+
+<div class="field full">
+<label for="nombre">Full name *</label>
+<input id="nombre" required maxlength=40 autocomplete="name">
+</div>
+
+</div>
+
+<div class="divider"></div>
+
+<div class="field">
+<label for="texto">¡Let's start!</label>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+    <button id="startBtn" type="button" style="background:#176b3a;padding:10px 16px;">▶ Click to start</button>
+    <div id="timer" class="help" style="font-size:16px;font-weight:700;color:#243b8f;margin:0;">00:00:00</div>
+</div>
+<textarea id="texto" class="locked" maxlength="100000" placeholder="Click ▶ Start..." disabled></textarea>
+<div id="wordCounter" class="help" style="font-weight:700;color:#243b8f;">0 palabras</div>
+<div class="help"></div>
+</div>
+
+
+
+<div class="actions">
+<button id="submitBtn" type="submit">Submit</button>
+<div id="status" class="status" aria-live="polite"></div>
+</div>
+
+<div class="note">
+Al hacer clic en Submit, espera a que el archivo Word (.docx) se envíe y se descargue en tu computadora. 
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+/* ==========================================================
+   URL DE gas
+   ========================================================== */
+
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbysbPZV69yZ6M6plcdy7643ByX1m05ElzeEj-94IINuy3NjzRDNsQ1tiCFb-cydfcfkwA/exec";
+
+
+const form = document.getElementById("uploadForm");
+const btn = document.getElementById("submitBtn");
+const statusBox = document.getElementById("status");
+const textoInput = document.getElementById("texto");
+const wordCounter = document.getElementById("wordCounter");
+
+// El colegio debe coincidir exactamente con una opción existente.
+const colegioInput = document.getElementById("colegio");
+let colegiosDisponibles = [];
+const listaColegios = document.getElementById("colegiosDisponibles");
+
+// Consulta la lista vigente en Google Sheets mediante el servidor Apps Script.
+function cargarColegios(){
+    const callbackName = "writingSchoolsCallback_" + Date.now();
+    const script = document.createElement("script");
+    window[callbackName] = function(respuesta){
+        try {
+            if (!respuesta || respuesta.ok !== true || !Array.isArray(respuesta.colegios)) {
+                throw new Error("Respuesta no válida del servidor.");
+            }
+            colegiosDisponibles = respuesta.colegios;
+            listaColegios.replaceChildren();
+
+            colegiosDisponibles.forEach(function(nombreColegio){
+                const option = document.createElement("option");
+                option.value = nombreColegio;
+                option.textContent = nombreColegio;
+                listaColegios.appendChild(option);
+            });
+            colegioInput.setCustomValidity("");
+            if (colegiosDisponibles.length === 0) {
+                mostrarEstado("La conexión funciona, pero no hay colegios activos en la lista.", "err");
+            }
+        } catch (error) {
+            mostrarEstado("No se pudo cargar la lista de colegios. Recarga la página o contacta al administrador.", "err");
+        } finally {
+            delete window[callbackName];
+            script.remove();
+        }
+    };
+    script.onerror = function(){
+        delete window[callbackName];
+        script.remove();
+        listaColegios.replaceChildren();
+        mostrarEstado("No se pudo conectar con la lista de colegios. Verifica tu conexión e inténtalo de nuevo.", "err");
+    };
+    script.src = SCRIPT_URL + "?action=schools&callback=" + encodeURIComponent(callbackName) + "&t=" + Date.now();
+    document.head.appendChild(script);
+}
+
+function validarColegioSeleccionado(){
+    const valor = colegioInput.value.trim();
+    const existe = colegiosDisponibles.some(
+        colegio => colegio.toLocaleLowerCase() === valor.toLocaleLowerCase()
+    );
+    colegioInput.setCustomValidity(
+        !valor || existe ? "" : "Selecciona un colegio que aparezca en la lista."
+    );
+    return Boolean(valor) && existe;
+}
+
+colegioInput.addEventListener("input", validarColegioSeleccionado);
+colegioInput.addEventListener("change", validarColegioSeleccionado);
+
+cargarColegios();
+
+function contarPalabras(texto){
+    const limpio = String(texto || "").trim();
+    return limpio ? limpio.split(/\s+/).length : 0;
+}
+
+function actualizarContador(){
+    wordCounter.textContent =
+        contarPalabras(textoInput.value) + " palabras";
+}
+
+textoInput.addEventListener("input", actualizarContador);
+actualizarContador();
+
+const startBtn = document.getElementById("startBtn");
+const timerBox = document.getElementById("timer");
+let startTime = null;
+let timerInterval = null;
+let elapsedSeconds = 0;
+
+function formatTime(totalSeconds){
+    const h=Math.floor(totalSeconds/3600);
+    const m=Math.floor((totalSeconds%3600)/60);
+    const s=totalSeconds%60;
+    return [String(h).padStart(2,"0"),String(m).padStart(2,"0"),String(s).padStart(2,"0")].join(":");
+}
+
+function updateTimer(){
+    if(!startTime)return;
+    elapsedSeconds=Math.floor((Date.now()-startTime)/1000);
+    timerBox.textContent=formatTime(elapsedSeconds);
+}
+
+startBtn.addEventListener("click",function(){
+    if(startTime)return;
+
+    startTime=Date.now();
+    elapsedSeconds=0;
+    timerBox.textContent="00:00:00";
+    timerInterval=setInterval(updateTimer,1000);
+
+    startBtn.disabled=true;
+    startBtn.textContent="⏱ En progreso";
+
+    // El alumno NO puede escribir hasta pulsar Start.
+    textoInput.disabled=false;
+    textoInput.classList.remove("locked");
+    textoInput.focus();
+});
+
+function getTimeForFile(){
+    return startTime ? formatTime(elapsedSeconds).replace(/:/g,"-") : "sin-start";
+}
+
+
+/* ==========================================================
+   MOSTRAR ARCHIVO SELECCIONADO
+   ========================================================== */
+
+
+
+
+/* ==========================================================
+   LIMPIAR NOMBRES
+   ========================================================== */
+
+function limpiarNombre(valor){
+
+    return String(valor)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[\\/:*?"<>|#%{}~&]/g,"")
+        .replace(/\s+/g," ")
+        .trim();
+
+}
+
+
+/* ==========================================================
+   MOSTRAR ESTADO
+   ========================================================== */
+
+function mostrarEstado(mensaje,tipo=""){
+
+    statusBox.textContent = mensaje;
+
+    statusBox.className =
+        "status show " + tipo;
+
+}
+
+
+/* ==========================================================
+   BYTES → BASE64
+   ========================================================== */
+
+function bytesToBase64(bytes){
+
+    let binary = "";
+
+    const tamaño = 0x8000;
+
+    for(
+        let i=0;
+        i<bytes.length;
+        i+=tamaño
+    ){
+
+        binary += String.fromCharCode(
+            ...bytes.subarray(
+                i,
+                i+tamaño
+            )
+        );
+
+    }
+
+    return btoa(binary);
+
+}
+
+
+/* ==========================================================
+   EXTENSIÓN
+   ========================================================== */
+
+function obtenerExtension(nombre){
+
+    const posicion =
+        nombre.lastIndexOf(".");
+
+    if(posicion === -1){
+
+        return "";
+
+    }
+
+    return nombre.substring(posicion);
+
+}
+
+
+/* ==========================================================
+   docrea
+   ========================================================== */
+
+function xmlEscape(valor){
+    return String(valor ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+}
+
+function wordRun(texto, opciones={}){
+    const props = (opciones.bold ? "<w:b/>" : "") + (opciones.size ? `<w:sz w:val="${opciones.size}"/><w:szCs w:val="${opciones.size}"/>` : "");
+    return `<w:r>${props ? `<w:rPr>${props}</w:rPr>` : ""}<w:t xml:space="preserve">${xmlEscape(texto)}</w:t></w:r>`;
+}
+
+function wordParagraph(contenido, opciones={}){
+    let pPr = "";
+    if(opciones.style) pPr += `<w:pStyle w:val="${opciones.style}"/>`;
+    if(opciones.after !== undefined) pPr += `<w:spacing w:after="${opciones.after}"/>`;
+    return `<w:p>${pPr ? `<w:pPr>${pPr}</w:pPr>` : ""}${contenido}</w:p>`;
+}
+
+function crc32(bytes){
+    let crc = 0xFFFFFFFF;
+    for(let i=0;i<bytes.length;i++){
+        crc ^= bytes[i];
+        for(let j=0;j<8;j++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function crearZipSinCompresion(archivos){
+    const encoder = new TextEncoder();
+    const partesLocales = [];
+    const partesCentral = [];
+    let offset = 0;
+    const dosNow = new Date();
+    const dosTime = (dosNow.getHours()<<11) | (dosNow.getMinutes()<<5) | Math.floor(dosNow.getSeconds()/2);
+    const dosDate = ((Math.max(1980,dosNow.getFullYear())-1980)<<9) | ((dosNow.getMonth()+1)<<5) | dosNow.getDate();
+
+    function header(size){ return new Uint8Array(size); }
+    for(const archivo of archivos){
+        const nombre = encoder.encode(archivo.nombre);
+        const datos = encoder.encode(archivo.contenido);
+        const crc = crc32(datos);
+        const local = header(30 + nombre.length);
+        const lv = new DataView(local.buffer);
+        lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0x0800,true);
+        lv.setUint16(8,0,true); lv.setUint16(10,dosTime,true); lv.setUint16(12,dosDate,true);
+        lv.setUint32(14,crc,true); lv.setUint32(18,datos.length,true); lv.setUint32(22,datos.length,true);
+        lv.setUint16(26,nombre.length,true); lv.setUint16(28,0,true); local.set(nombre,30);
+        partesLocales.push(local,datos);
+
+        const central = header(46 + nombre.length);
+        const cv = new DataView(central.buffer);
+        cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+        cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true); cv.setUint16(14,dosDate,true);
+        cv.setUint32(16,crc,true); cv.setUint32(20,datos.length,true); cv.setUint32(24,datos.length,true);
+        cv.setUint16(28,nombre.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+        cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true); cv.setUint32(42,offset,true);
+        central.set(nombre,46); partesCentral.push(central);
+        offset += local.length + datos.length;
+    }
+    const centralSize = partesCentral.reduce((n,x)=>n+x.length,0);
+    const end = header(22); const ev = new DataView(end.buffer);
+    ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+    ev.setUint16(8,archivos.length,true); ev.setUint16(10,archivos.length,true);
+    ev.setUint32(12,centralSize,true); ev.setUint32(16,offset,true); ev.setUint16(20,0,true);
+    return new Blob([...partesLocales,...partesCentral,end],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+
+async function crearDocumentoWord(colegio, grupo, nombre, texto, tiempo, fechaHora){
+    const parrafos = [];
+    parrafos.push(wordParagraph(wordRun("WRITING",{bold:true,size:32}),{style:"Title",after:240}));
+    parrafos.push(wordParagraph(wordRun("Full name: ",{bold:true})+wordRun(nombre),{after:100}));
+    parrafos.push(wordParagraph(wordRun("School: ",{bold:true})+wordRun(colegio),{after:100}));
+    parrafos.push(wordParagraph(wordRun("Grade and Class: ",{bold:true})+wordRun(grupo),{after:100}));
+    parrafos.push(wordParagraph(wordRun("Date and time: ",{bold:true})+wordRun(fechaHora),{after:100}));
+    parrafos.push(wordParagraph(wordRun("Time used: ",{bold:true})+wordRun(tiempo),{after:300}));
+    parrafos.push(wordParagraph(wordRun("Student writing",{bold:true,size:28}),{style:"Heading1",after:160}));
+    texto.replace(/\r/g,"").split("\n").forEach(linea=>parrafos.push(wordParagraph(wordRun(linea || " "),{after:100})));
+
+    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${parrafos.join("")}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+    const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="22"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style></w:styles>`;
+    const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Writing - ${xmlEscape(nombre)}</dc:title><dc:creator>Writing Form</dc:creator><dc:subject>Student writing submission</dc:subject></cp:coreProperties>`;
+    return crearZipSinCompresion([
+        {nombre:"[Content_Types].xml",contenido:contentTypes},
+        {nombre:"_rels/.rels",contenido:rels},
+        {nombre:"word/document.xml",contenido:documentXml},
+        {nombre:"word/styles.xml",contenido:styles},
+        {nombre:"docProps/core.xml",contenido:core}
+    ]);
+}
+/* ==========================================================
+   docdes
+   ========================================================== */
+
+async function descargarWritingAutomaticamente(){
+
+    const colegio = limpiarNombre(document.getElementById("colegio").value);
+    const grupo = limpiarNombre(document.getElementById("grupo").value);
+    const nombre = limpiarNombre(document.getElementById("nombre").value);
+    const texto = textoInput.value.trim();
+
+    updateTimer();
+
+    const tiempo = formatTime(elapsedSeconds);
+    const fechaHora = new Date().toLocaleString("es-MX", {
+        dateStyle:"short",
+        timeStyle:"medium"
+    });
+
+    const nombreArchivo =
+        colegio + " - " + grupo + " - " + nombre +
+        " - " + getTimeForFile() + ".docx";
+
+    const blob = await crearDocumentoWord(colegio, grupo, nombre, texto, tiempo, fechaHora);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = nombreArchivo;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(function(){
+        URL.revokeObjectURL(url);
+    }, 3000);
+}
+
+/* ==========================================================
+   send
+   ========================================================== */
+
+form.addEventListener("submit", async function(event){
+
+    event.preventDefault();
+
+
+    const colegio =
+        limpiarNombre(
+            document.getElementById("colegio").value
+        );
+
+
+    const grupo =
+        limpiarNombre(
+            document.getElementById("grupo").value
+        );
+
+
+    const nombre =
+        limpiarNombre(
+            document.getElementById("nombre").value
+        );
+
+
+    const texto =
+        document.getElementById("texto").value;
+
+
+    const archivo = null;
+
+
+    /* VALIDACIONES */
+    if(colegiosDisponibles.length === 0){
+        mostrarEstado("La lista de colegios todavía no está disponible. Recarga la página e inténtalo de nuevo.", "err");
+        btn.disabled = false;
+        return;
+    }
+
+    if(!validarColegioSeleccionado()){
+        mostrarEstado(
+            "select.",
+            "err"
+        );
+        colegioInput.focus();
+        btn.disabled = false;
+        return;
+    }
+
+    if(!colegio || !grupo || !nombre){
+
+        mostrarEstado(
+            "Please complete all required fields.",
+            "err"
+        );
+
+        return;
+
+    }
+
+    /* Full name debe contener al menos 3 palabras */
+    const palabrasNombre = nombre.split(/\s+/).filter(Boolean);
+
+    if(palabrasNombre.length < 3){
+
+        mostrarEstado(
+            "Enter your full name.",
+            "err"
+        );
+
+        document.getElementById("nombre").focus();
+        return;
+
+    }
+
+
+    if(texto.trim() && !startTime){
+        mostrarEstado(
+            "Pulsa ▶ Start antes de escribir el trabajo.",
+            "err"
+        );
+        btn.disabled=false;
+        return;
+    }
+
+    if(!texto.trim()){
+
+        mostrarEstado(
+            "You must click start and write.",
+            "err"
+        );
+
+        btn.disabled=false;
+        return;
+
+    }
+
+
+    btn.disabled = true;
+
+
+    try{
+
+        let nombreArchivo;
+        let tipoArchivo;
+        let contenidoBase64;
+
+
+        /* ==================================================
+           doc for gas
+           ================================================== */
+
+        updateTimer();
+
+        const tiempoWord = formatTime(elapsedSeconds);
+        const fechaHoraWord = new Date().toLocaleString("es-MX", {
+            dateStyle:"short",
+            timeStyle:"medium"
+        });
+
+        const blobWord = await crearDocumentoWord(
+            colegio,
+            grupo,
+            nombre,
+            texto.trim(),
+            tiempoWord,
+            fechaHoraWord
+        );
+
+        nombreArchivo =
+            colegio + " - " + grupo + " - " + nombre +
+            " - " + getTimeForFile() + ".docx";
+
+        tipoArchivo =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        const bytesWord = new Uint8Array(await blobWord.arrayBuffer());
+        contenidoBase64 = bytesToBase64(bytesWord);
+
+
+        /* ==================================================
+           PREPARAR ENVÍO
+           ================================================== */
+
+        mostrarEstado(
+            "Enviando archivo por favor espera"
+        );
+
+
+        const frameName =
+            "uploadFrame_" +
+            Date.now();
+
+
+        const iframe =
+            document.createElement("iframe");
+
+
+        iframe.name =
+            frameName;
+
+
+        iframe.style.display =
+            "none";
+
+
+        document.body.appendChild(
+            iframe
+        );
+
+
+        const postForm =
+            document.createElement("form");
+
+
+        postForm.method =
+            "POST";
+
+
+        postForm.action =
+            SCRIPT_URL;
+
+
+        postForm.target =
+            frameName;
+
+
+        postForm.style.display =
+            "none";
+
+
+        const datos = {
+
+            colegio: colegio,
+
+            grupo: grupo,
+
+            nombre: nombre,
+
+            fileName: nombreArchivo,
+
+            mimeType: tipoArchivo,
+
+            base64: contenidoBase64
+
+        };
+
+
+        Object.entries(datos).forEach(
+            function([clave,valor]){
+
+                const input =
+                    document.createElement("input");
+
+                input.type =
+                    "hidden";
+
+                input.name =
+                    clave;
+
+                input.value =
+                    valor;
+
+                postForm.appendChild(
+                    input
+                );
+
+            }
+        );
+
+
+        document.body.appendChild(
+            postForm
+        );
+
+
+        /*
+        ================================================
+        ENVÍO REAL
+        ================================================
+        */
+
+        postForm.submit();
+
+
+        /*
+        ================================================
+        ESPERAR A Gas
+        ================================================
+        */
+
+        setTimeout(
+            async function(){
+
+                const fechaHoraAlumno = new Date().toLocaleString("es-MX", {
+                    dateStyle:"short",
+                    timeStyle:"medium"
+                });
+
+                mostrarEstado(
+                    "✓ Trabajo enviado correctamente.\n\n" +
+                    "Descargando archivo Word (.docx)...\n\n" +
+                    "Archivo: " + nombreArchivo +
+                    "\nFecha y hora: " + fechaHoraAlumno +
+                    "\nTiempo: " + formatTime(elapsedSeconds),
+                    "ok"
+                );
+
+                try {
+                    await descargarWritingAutomaticamente();
+                } catch (downloadError) {
+                    console.error(downloadError);
+                    mostrarEstado(
+                        "El trabajo se envió, pero no se pudo descargar el Word. " + downloadError.message,
+                        "err"
+                    );
+                }
+
+                form.reset();
+actualizarContador();
+
+if(timerInterval){
+    clearInterval(timerInterval);
+}
+startTime=null;
+elapsedSeconds=0;
+timerBox.textContent="00:00:00";
+startBtn.disabled=false;
+startBtn.textContent="▶ Start";
+
+textoInput.value="";
+textoInput.disabled=true;
+textoInput.classList.add("locked");
+
+                btn.disabled = false;
+
+                postForm.remove();
+
+                iframe.remove();
+
+            },
+            5000
+        );
+
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        mostrarEstado(
+            "Error al preparar el archivo:\n" +
+            error.message,
+            "err"
+        );
+
+        btn.disabled = false;
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
